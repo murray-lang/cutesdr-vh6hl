@@ -4,7 +4,7 @@
 #include "LowPassFirKernel.h"
 
 const vsdrcomplex&
-LowPassFirKernel::configureComplex(int32_t freqHiCut, int32_t offset, int32_t sampleRate)
+LowPassFirKernel::configureComplex(int32_t freqHiCut, int32_t offset, uint32_t sampleRate)
 {
   auto sampleRateReal = static_cast<sdrreal>(sampleRate);
   sdrreal loCutRate = -(sampleRateReal / 2.0f - 256.0f)  / sampleRateReal; // Lowest frequency + room for slope

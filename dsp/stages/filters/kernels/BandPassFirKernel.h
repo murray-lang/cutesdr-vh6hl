@@ -14,14 +14,14 @@ public:
   {
   }
 
-  void configure(int32_t freqLoCut, int32_t freqHiCut, int32_t offset, int32_t sampleRate)
+  void configure(int32_t freqLoCut, int32_t freqHiCut, int32_t offset, uint32_t sampleRate)
   {
     const vsdrcomplex& complex = configureComplex(freqLoCut, freqHiCut, offset, sampleRate);
     complexToReal(complex, m_realCoefficients);
   }
 
 protected:
-  const vsdrcomplex& configureComplex(int32_t freqLoCut, int32_t freqHiCut, int32_t offset, int32_t sampleRate);
+  const vsdrcomplex& configureComplex(int32_t freqLoCut, int32_t freqHiCut, int32_t offset, uint32_t sampleRate);
 
 
 };

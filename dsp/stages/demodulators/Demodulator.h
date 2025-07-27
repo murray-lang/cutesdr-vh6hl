@@ -1,6 +1,6 @@
 #ifndef DEMODULATOR_H
 #define DEMODULATOR_H
-#include "../SdrStage.h"
+#include "../IqStage.h"
 #include "DemodulatorSettings.h"
 
 class Demodulator

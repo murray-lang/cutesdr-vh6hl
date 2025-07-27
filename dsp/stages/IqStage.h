@@ -1,11 +1,11 @@
-#ifndef __SDR_STAGE_H__
-#define __SDR_STAGE_H__
+#ifndef __IQ_STAGE_H__
+#define __IQ_STAGE_H__
 #include <stddef.h>
 #include <stdint.h>
 #include "../../SampleTypes.h"
 #include "../utils/PingPongBuffers.h"
 
-class SdrStage
+class IqStage
 {
 public:
     virtual uint32_t processSamples(ComplexPingPongBuffers& buffers, uint32_t inputLength)
@@ -15,4 +15,4 @@ public:
     }
 };
 
-#endif //__SDR_STAGE_H__
+#endif //__IQ_STAGE_H__

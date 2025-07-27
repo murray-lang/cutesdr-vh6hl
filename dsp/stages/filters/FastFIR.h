@@ -2,7 +2,7 @@
 #define __FIR_H__
 
 #include "../../../SampleTypes.h"
-#include "../SdrStage.h"
+#include "../IqStage.h"
 #include "../../utils/pocketfft/pocketfft_hdronly.h"
 #include "../../utils/constants.h"
 #include "kernels/BandPassFirKernel.h"
@@ -18,7 +18,7 @@
 #define FIR_SIZE(fftSize) ((fftSize)/2 +1)
 
 template<class kernel, class sampleType>
-class FastFIR
+class FastFIR : public IqStage
 {
 public:
   explicit FastFIR(uint32_t fftSize) :
@@ -48,11 +48,7 @@ public:
     m_outputBuffer.assign(m_fftSize, static_cast<sampleType>(0));
   }
 
-  uint32_t processSamples(
-      PingPongBuffers<sampleType>& sampleBuffers,
-      uint32_t inputLength,
-      DiagnosticSignaller* chartSignaller
-  )
+  uint32_t processSamples(PingPongBuffers<sampleType>& sampleBuffers, uint32_t inputLength )
   {
 //    sampleBuffers.flip();
 //    return inputLength;
@@ -71,7 +67,7 @@ public:
       if (m_inputCursor == m_firSize - 1)
       {
 //        std::copy(m_inputBuffer.begin(), m_inputBuffer.end(), m_outputBuffer.begin());
-        applyFilter(m_inputBuffer, m_outputBuffer, chartSignaller);
+        applyFilter(m_inputBuffer, m_outputBuffer);
         for(uint32_t filteredIndex = m_inputCentre; filteredIndex < m_fftSize; filteredIndex++) // FFT-based
         {
           samplesOutput.at(outPos++) = m_outputBuffer.at(filteredIndex);
@@ -119,12 +115,9 @@ public:
   kernel& getKernel() { return m_kernel; }
 
 private:
-  void applyFilter(
-      const std::vector<sdrcomplex>& input,
-      std::vector<sdrcomplex>& output,
-      DiagnosticSignaller* chartSignaller)
+  void applyFilter(vsdrcomplex& input, vsdrcomplex& output)
   {
-    applyFftCoefficients(input, output, chartSignaller);
+    applyFftCoefficients(input, output);
 //    applyConvolution(input, output, chartSignaller);
 //    std::copy(input.begin(), input.end(), output.begin());
   }
@@ -134,16 +127,13 @@ private:
 //    applyConvolution(buffers, chartSignaller);
 //  }
 
-  void applyFilter(const std::vector<sdrreal>& input, std::vector<sdrreal>& output, DiagnosticSignaller* chartSignaller)
+  void applyFilter(const vsdrreal& input, vsdrreal& output)
   {
 //    applyConvolution(input, output, chartSignaller);
-    applyFftCoefficients(input, output, chartSignaller);
+    applyFftCoefficients(input, output);
   }
 
-  void applyConvolution(
-      const std::vector<sdrcomplex>& input,
-      std::vector<sdrcomplex>& output,
-      DiagnosticSignaller* chartSignaller)
+  void applyConvolution(vsdrcomplex& input, vsdrcomplex& output)
   {
     static uint32_t count = 0;
 //    std::copy(input.begin(), input.end(), output.begin());
@@ -163,7 +153,7 @@ private:
     qDebug() << count++;
   }
 
-  void applyConvolution(const std::vector<sdrreal>& input, std::vector<sdrreal>& output, DiagnosticSignaller* chartSignaller)
+  void applyConvolution(const vsdrreal& input, vsdrreal& output)
   {
     const vsdrreal& sincPulse = m_kernel.getRealSincPulse();
     uint32_t inputSize = input.size();
@@ -181,11 +171,7 @@ private:
 
   }
 
-  void applyFftCoefficients(
-      const std::vector<sampleType>& input,
-      std::vector<sampleType>& output,
-      DiagnosticSignaller* chartSignaller
-  )
+  void applyFftCoefficients(const std::vector<sampleType>& input, std::vector<sampleType>& output)
   {
     uint32_t inputSize = input.size();
     PingPongBuffers<sampleType> internalBuffers = PingPongBuffers<sampleType>(inputSize);
@@ -198,24 +184,17 @@ private:
 //      windowedInput.at(i) = signalInput.at(i);// * static_cast<float>(hanning(i, m_fftSize));
 //    }
 
-    fft(input, internalBuffers.input(), pocketfft::FORWARD, chartSignaller);
+    fft(input, internalBuffers.input(), pocketfft::FORWARD);
     //internalBuffers.flip();
 
-    multiplyByCoefficients(internalBuffers.input(), internalBuffers.output(), nullptr);
+    multiplyByCoefficients(internalBuffers.input(), internalBuffers.output());
     internalBuffers.flip();
 
-    fft(internalBuffers.input(), output, pocketfft::BACKWARD, nullptr/*chartSignaller*/);
+    fft(internalBuffers.input(), output, pocketfft::BACKWARD);
   }
 
-  void multiplyByCoefficients(
-      const vsdrcomplex& values,
-      vsdrcomplex& result,
-      DiagnosticSignaller* chartSignaller
-  )
+  void multiplyByCoefficients(const vsdrcomplex& values, vsdrcomplex& result)
   {
-    if (chartSignaller != nullptr) {
-      chartSignaller->emitTimeseries(m_kernel.getComplexCoefficients(), m_kernel.getComplexCoefficients().size(), true);
-    }
     const vsdrcomplex& coefficients = m_kernel.getComplexCoefficients();
     const vsdrcomplex unity(m_fftSize, sdrcomplex(0.0, 0.0));
     std::transform(
@@ -227,15 +206,8 @@ private:
     );
   }
 
-  void multiplyByCoefficients(
-      const std::vector<sdrreal>& values,
-      std::vector<sdrreal>& result,
-      DiagnosticSignaller* chartSignaller
-  )
+  void multiplyByCoefficients(const vsdrreal& values, vsdrreal& result)
   {
-    if (chartSignaller != nullptr) {
-      chartSignaller->emitTimeseries(m_kernel.getRealCoefficients(), m_kernel.getRealCoefficients().size(), true);
-    }
     std::transform(
         std::begin(values),
         std::end(values),
@@ -245,7 +217,7 @@ private:
     );
   }
 
-  void fft(const vsdrcomplex& in, vsdrcomplex& out, bool isForward, DiagnosticSignaller* chartSignaller)
+  void fft(const vsdrcomplex& in, vsdrcomplex& out, bool isForward)
   {
     pocketfft::c2c(
         m_pocketfft_shape,
@@ -268,11 +240,8 @@ private:
 
   }
 
-  void fft(const std::vector<sdrreal>& in, std::vector<sdrreal>& out, bool isForward, DiagnosticSignaller* chartSignaller)
+  void fft(const vsdrreal& in, vsdrreal& out, bool isForward)
   {
-//    if (chartSignaller != nullptr) {
-//      chartSignaller->emitTimeseries(in, in.size(), false);
-//    }
     pocketfft::r2r_fftpack(
         m_pocketfft_shape,
         m_pocketfft_stride,
@@ -284,9 +253,6 @@ private:
         out.data(),
         isForward ? (static_cast<sdrreal>(1.0)/static_cast<sdrreal>(m_fftSize)) : static_cast<sdrreal>(1.0)
     );
-    if (chartSignaller != nullptr && !isForward) {
-      chartSignaller->emitTimeseries(out, out.size(), false);
-    }
   }
 
 private:

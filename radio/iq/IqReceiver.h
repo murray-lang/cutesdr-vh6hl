@@ -5,17 +5,18 @@
 #include <QAudioFormat>
 #include "../../SampleTypes.h"
 #include "../../dsp/utils/FftThread.h"
-#include "../../dsp/stages/OscillatorMixer.h"
-#include "../../dsp/stages/OscillatorInjector.h"
+#include "../../dsp/stages/oscillators/OscillatorMixer.h"
+#include "../../dsp/stages/oscillators/OscillatorInjector.h"
 #include "../../dsp/stages/decimator/Decimator.h"
-#include "../../dsp/stages/decimator/MyDecimator.h"
+#include "../../dsp/stages/decimator/Decimator.h"
 #include "../../dsp/stages/DcShift.h"
-#include "../../dsp/stages/fir/FastFIR.h"
+#include "../../dsp/stages/filters/FastFIR.h"
 #include "../../dsp/utils/PingPongBuffers.h"
 #include "../../io/iq/IqSink.h"
 #include "../../dsp/stages/demodulators/AmDemodulator.h"
-#include "../../dsp/stages/fir/kernels/BandPassFirKernel.h"
+#include "../../dsp/stages/filters/kernels/BandPassFirKernel.h"
 #include "../../DiagnosticSignaller.h"
+#include "../../dsp/stages/metering/MeteringStage.h"
 
 //#define PING_PONG_LENGTH 2048
 #define PING_PONG_LENGTH 8192
@@ -41,11 +42,12 @@ protected:
 //  void emitTimeseries(const vsdrreal& samples, uint32_t length);
     //void processPing();
 
-  void shuffleFftOutput(const vsdrcomplex& rawFft, vsdrcomplex& shuffled);
+//  void shuffleFftOutput(const vsdrcomplex& rawFft, vsdrcomplex& shuffled);
   void emitAudioData(const vsdrreal& samples, uint32_t length);
 
 protected:
   //QAudioFormat m_audioFormat;
+  std::vector<IqStage*> m_iqStages;
   FftThread m_fftThread;
   size_t m_inputCount;
   DcShift m_dcShift;
@@ -53,14 +55,15 @@ protected:
   OscillatorInjector m_signal1;
   OscillatorInjector m_signal2;
   OscillatorInjector m_signal3;
-  Decimator m_decimator;
-  MyDecimator m_myDecimator;
+  Decimator m_myDecimator;
   ComplexPingPongBuffers m_ifBuffers;
   RealPingPongBuffers m_afBuffers;
   Oscillator m_debugOscillator;
   BandPassFilter m_ifFilter;
   BandPassFilter m_afFilter;
   AmDemodulator* m_pDemodulator;
+  MeteringStage m_timeseriesEmitter;
+  MeteringStage m_spectrumEmitter;
 };
 
 #endif //__SDR_H__

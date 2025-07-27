@@ -76,12 +76,11 @@ set(PROJECT_SOURCES
         dsp/utils/VectorAssembler.h
         dsp/utils/pocketfft/pocketfft_hdronly.h
         radio/iq/IqReceiver.h radio/iq/IqReceiver.cpp
-        dsp/stages/SdrStage.h
-        dsp/stages/OscillatorStage.h
-        dsp/stages/OscillatorMixer.h
-        dsp/stages/OscillatorInjector.h
-        dsp/stages/decimator/Decimator.h dsp/stages/decimator/Decimator.cpp
-        dsp/stages/fir/FastFIR.h
+        dsp/stages/IqStage.h
+        dsp/stages/oscillators/OscillatorStage.h
+        dsp/stages/oscillators/OscillatorMixer.h
+        dsp/stages/oscillators/OscillatorInjector.h
+        dsp/stages/filters/FastFIR.h
         dsp/stages/DcShift.h
         dsp/stages/demodulators/Demodulator.h
         dsp/stages/demodulators/AmDemodulator.h
@@ -112,21 +111,22 @@ set(PROJECT_SOURCES
         io/iq/IqSink.h
         dsp/stages/demodulators/DemodulatorSettings.h
         dsp/stages/demodulators/AmDemodulator.cpp
-        dsp/stages/fir/kernels/FirKernel.h
-        dsp/stages/fir/kernels/BandPassFirKernel.h
-        dsp/stages/fir/kernels/BandPassFirKernel.cpp
-        dsp/stages/fir/kernels/BandStopFirKernel.cpp
-        dsp/stages/fir/kernels/BandStopFirKernel.h
-        dsp/stages/fir/kernels/LowPassFirKernel.cpp
-        dsp/stages/fir/kernels/LowPassFirKernel.h
+        dsp/stages/filters/kernels/FirKernel.h
+        dsp/stages/filters/kernels/BandPassFirKernel.h
+        dsp/stages/filters/kernels/BandPassFirKernel.cpp
+        dsp/stages/filters/kernels/BandStopFirKernel.cpp
+        dsp/stages/filters/kernels/BandStopFirKernel.h
+        dsp/stages/filters/kernels/LowPassFirKernel.cpp
+        dsp/stages/filters/kernels/LowPassFirKernel.h
         DiagnosticSignaller.h
-        dsp/stages/fir/OverlapBuffers.h
+        dsp/stages/filters/OverlapBuffers.h
         dsp/utils/window.h
         dsp/utils/OverlapBuffers.h
-        dsp/stages/decimator/MyDecimator.h
+        dsp/stages/decimator/Decimator.h
         dsp/stages/decimator/MyFirCoefficients.h
         io/audio/AudioOutput.cpp
         io/audio/AudioOutput.h
+        dsp/stages/metering/MeteringStage.h
 
 )
 

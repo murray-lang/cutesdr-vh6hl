@@ -5,7 +5,7 @@
 #include <vector>
 //#include <valarray>
 
-using sdrreal = double;
+using sdrreal = float;
 using vsdrreal = std::vector<sdrreal>;
 using sdrcomplex = std::complex<sdrreal>;
 using vsdrcomplex = std::vector<sdrcomplex>;

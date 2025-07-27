@@ -1,7 +1,7 @@
 #ifndef __OSCILLATORINJECTOR_H__
 #define __OSCILLATORINJECTOR_H__
 
-#include "./OscillatorStage.h"
+#include "OscillatorStage.h"
 #include <algorithm>
 
 class OscillatorInjector : public OscillatorStage

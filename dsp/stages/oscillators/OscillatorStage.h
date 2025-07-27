@@ -1,11 +1,11 @@
 #ifndef __OSCILLATORSTAGE_H__
 #define __OSCILLATORSTAGE_H__
 
-#include "SdrStage.h"
-#include "../blocks/Oscillator.h"
+#include "../IqStage.h"
+#include "../../blocks/Oscillator.h"
 #include <algorithm>
 
-class OscillatorStage : public SdrStage
+class OscillatorStage : public IqStage
 {
 public:
     OscillatorStage(int32_t sampleRate, int32_t frequency) :
