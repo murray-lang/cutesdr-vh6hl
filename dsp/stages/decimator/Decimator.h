@@ -1,126 +1,80 @@
-#ifndef __DECIMATOR_H__
-#define __DECIMATOR_H__
+//
+// Created by murray on 16/07/25.
+//
 
-#include <stddef.h>
-#include <stdint.h>
-// #include <fftw3.h>
-#include <queue>
-#include <QVector>
-#include "../SdrStage.h"
+#ifndef MYDECIMATOR_H
+#define MYDECIMATOR_H
+
+#include <cstdint>
+#include "../IqStage.h"
 #include "../../utils/PingPongBuffers.h"
-#include "../../utils/OverlapBuffers.h"
+#include "MyFirCoefficients.h"
 
-constexpr size_t k_taps = 31;
 
-extern sdrcomplex complexZero;
-
-class DecimateBy2
+class Decimator : public IqStage
 {
 public:
-    virtual ~DecimateBy2() {}
-
-    virtual uint32_t Decimate(ComplexPingPongBuffers& buffers, uint32_t inputLength) = 0;
-
-};
-
-class HalfBandDecimateBy2 : public DecimateBy2
-{
-public:
-  //HalfBandDecimateBy2(uint32_t length, const double* pCoefficients);
-  HalfBandDecimateBy2(uint32_t length, const sdrreal* pCoefficients);
-  virtual ~HalfBandDecimateBy2()
+  Decimator(uint32_t inputSampleRate, uint32_t outputSampleRate) :
+    m_inputSampleRate(inputSampleRate),
+    m_outputSampleRate(outputSampleRate),
+    m_decimationFactor(outputSampleRate/inputSampleRate),
+    m_taps(nullptr)
   {
+    configure(inputSampleRate, outputSampleRate);
   }
-  virtual uint32_t Decimate(ComplexPingPongBuffers& buffers, uint32_t inputLength);
-  uint32_t _Decimate(ComplexPingPongBuffers& buffers, uint32_t inputLength);
-protected:
-  vsdrcomplex m_HBFirBuf;
-  uint32_t m_FirLength;
-  uint32_t m_stateLength;
-  //const double* m_pCoefficients;
-  const sdrreal* m_pCoefficients;
-  };
 
-class HalfBand11TapDecimateBy2 : public DecimateBy2
-{
-public:
-    HalfBand11TapDecimateBy2();
-    virtual ~HalfBand11TapDecimateBy2(){}
-    virtual uint32_t Decimate(ComplexPingPongBuffers& buffers, uint32_t inputLength);
-//    double H0;	//unwrapped coeeficients
-//    double H2;
-//    double H4;
-//    double H5;
-//    double H6;
-//    double H8;
-//    double H10;
-    sdrreal H0;	//unwrapped coefficients
-    sdrreal H2;
-    sdrreal H4;
-    sdrreal H5;
-    sdrreal H6;
-    sdrreal H8;
-    sdrreal H10;
-    sdrcomplex d0;		//unwrapped delay buffer
-    sdrcomplex d1;
-    sdrcomplex d2;
-    sdrcomplex d3;
-    sdrcomplex d4;
-    sdrcomplex d5;
-    sdrcomplex d6;
-    sdrcomplex d7;
-    sdrcomplex d8;
-    sdrcomplex d9;
-};
+  bool configure(uint32_t inputSampleRate, uint32_t outputSampleRate)
+  {
+    m_inputSampleRate = inputSampleRate;
+    m_outputSampleRate = outputSampleRate;
+    m_decimationFactor = inputSampleRate/outputSampleRate;
+    if (inputSampleRate == 192000)
+    {
+      if (outputSampleRate == 48000)
+      {
+        m_taps = &fir_taps_192k_48k;
+        m_overlap.assign(m_taps->size() - 1, sdrcomplex{});
 
-class CicN3DecimateBy2 : public DecimateBy2
-{
-public:
-    CicN3DecimateBy2();
-    virtual ~CicN3DecimateBy2(){}
-    virtual uint32_t Decimate(ComplexPingPongBuffers& buffers, uint32_t inputLength);
-    sdrcomplex m_Xodd;
-    sdrcomplex m_Xeven;
-};
+        return true;
+      }
+    }
+    return false;
+  }
 
-class Decimator : public SdrStage
-{
-public:
-  Decimator(uint32_t inputRate, uint32_t bandwidth, uint32_t bufferLength, uint32_t overlap);
-  virtual ~Decimator();
+  [[nodiscard]] uint32_t getOutputSampleRate() const { return m_outputSampleRate; }
 
-  uint32_t setInputDataRateAndOutputBandwidth(uint32_t inputRate, uint32_t bandwidth);
+  uint32_t processSamples(ComplexPingPongBuffers& buffers, uint32_t inputLength) override
+  {
+    vsdrcomplex& input = buffers.input();
+    vsdrcomplex& output = buffers.output();
+    uint32_t numTaps = m_taps->size();
+    uint32_t outputPos = 0;
 
-  uint32_t processSamples(ComplexPingPongBuffers& buffers, uint32_t inputLength) override;
+    vsdrcomplex work(m_overlap);
+    work.insert(work.end(), input.begin(), input.begin() + inputLength);
+    uint32_t workLength = work.size();
 
-  [[nodiscard]] uint32_t getOutputRate() const { return m_outputRate; }
+    for (uint32_t i = 0; i + numTaps <= workLength; i += m_decimationFactor)
+    {
+      sdrcomplex acc{};
+      for (uint32_t k = 0; k < numTaps; k++)
+      {
+        acc += work.at(i+k) * m_taps->at(k);
+      }
+      output.at(outputPos++) = acc;
+    }
+    if (workLength >= numTaps - 1)
+      std::copy(work.end() - (numTaps - 1), work.end(), m_overlap.begin());
+
+    return outputPos;
+  }
 
 protected:
-  uint32_t decimate(ComplexPingPongBuffers& buffers, uint32_t inputLength);
-  void cleanup();
-
-protected:
-  QVector<DecimateBy2*> m_decimators;
-  //ComplexPingPongBuffers m_buffers;
-  uint32_t m_inputRate;
-  uint32_t m_bandwidth;
-  uint32_t m_outputRate;
-
-  uint32_t m_inputOverlap;
-  uint32_t m_outputOverlap;
-  uint32_t m_overlapCursor;
-  uint32_t m_tailOverlapStart;
-  uint32_t m_currentInputCursor;
-  uint32_t m_nextInputCursor;
-  uint32_t m_bufferLength;
-  ComplexOverlapBuffers m_inputOverlapBuffers;
-  vsdrcomplex m_leftoverFromLastInput;
-//  vsdrcomplex m_outputBuffer;
-  vsdrcomplex m_outputOverlapBuffer;
-  std::queue<vsdrcomplex> m_outputQueue;
-
-  //DSPL-2.0 stuff
-  std::vector<double> m_taps;
+  uint32_t m_inputSampleRate;
+  uint32_t m_outputSampleRate;
+  const vsdrreal* m_taps;
+  uint32_t m_decimationFactor;
+  vsdrcomplex m_overlap;
 };
 
-#endif //__DECIMATOR_H__
+#endif //MYDECIMATOR_H

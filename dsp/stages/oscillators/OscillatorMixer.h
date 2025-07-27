@@ -1,7 +1,7 @@
 #ifndef __OSCILLATORMIXER_H__
 #define __OSCILLATORMIXER_H__
 
-#include "./OscillatorStage.h"
+#include "OscillatorStage.h"
 #include <algorithm>
 
 class OscillatorMixer : public OscillatorStage

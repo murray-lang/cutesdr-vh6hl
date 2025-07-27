@@ -1,9 +1,9 @@
 #ifndef __DCSHIFT_H__
 #define __DCSHIFT_H__
 
-#include "SdrStage.h"
+#include "IqStage.h"
 
-class DcShift  : public SdrStage
+class DcShift  : public IqStage
 {
 public:
     DcShift() : m_shift(0.0, 00) {}

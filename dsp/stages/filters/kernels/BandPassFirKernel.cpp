@@ -5,7 +5,7 @@
 
 
 const vsdrcomplex&
-BandPassFirKernel::configureComplex(int32_t freqLoCut, int32_t freqHiCut, int32_t offset, int32_t sampleRate)
+BandPassFirKernel::configureComplex(int32_t freqLoCut, int32_t freqHiCut, int32_t offset, uint32_t sampleRate)
 {
   auto sampleRateReal = static_cast<sdrreal>(sampleRate);
   sdrreal loCutRate = static_cast<sdrreal>(freqLoCut + offset) / sampleRateReal;

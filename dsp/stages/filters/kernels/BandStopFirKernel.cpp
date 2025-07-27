@@ -5,7 +5,7 @@
 #include "BandStopFirKernel.h"
 
 const vsdrcomplex&
-BandStopFirKernel::configureComplex(int32_t freqLoPass, int32_t freqHiPass, int32_t offset, int32_t sampleRate)
+BandStopFirKernel::configureComplex(int32_t freqLoPass, int32_t freqHiPass, int32_t offset, uint32_t sampleRate)
 {
   auto sampleRateReal = static_cast<sdrreal>(sampleRate);
   sdrreal loPassRate = static_cast<sdrreal>(freqLoPass + offset) / sampleRateReal;
