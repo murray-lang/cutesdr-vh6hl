@@ -16,10 +16,10 @@
 //#include <stdlib.h>
 #include "../../SampleTypes.h"
 #include "pocketfft/pocketfft_hdronly.h"
-#include "../../ChartSignaller.h"
+#include "../../DiagnosticSignaller.h"
 
 
-class FftThread : public QThread, public ChartSignaller //QRunnable
+class FftThread : public QThread, public DiagnosticSignaller //QRunnable
 {
 //  Q_OBJECT
 public:
@@ -28,9 +28,9 @@ public:
 
   void run(void);
 
-  void add(const sdrcomplex& iq);
+//  void add(const sdrcomplex& iq);
   void add(const vsdrcomplex& samples, uint32_t length, bool complete = false);
-  void addToFft(const vsdrcomplex* pfftInput);
+//  void addToFft(const vsdrcomplex* pfftInput);
   //void recycleFftInput(std::complex* buffer);
   //void recycleFftOutput(std::complex* buffer);
 
@@ -42,7 +42,7 @@ public:
 //    //void signalFftAvailable(std::complex* fftOut, size_t length);
 
   //protected:void emitTimeseries(const vsdrcomplex& samples, uint32_t length);
-  void processIq(const vsdrcomplex* pfftInput);
+  void processIq(const vsdrcomplex& fftInput);
 
   void cleanup();
 
@@ -54,7 +54,7 @@ protected:
     //ComplexBufferPool m_fftOutputBufferPool;
     vsdrcomplex* m_pNextFftInput;
 
-    QQueue<const vsdrcomplex*> m_fftQueue;
+    std::queue<vsdrcomplex> m_fftQueue;
     QMutex m_configMutex;
     QMutex m_queueMutex;
     QWaitCondition m_fftAdded;

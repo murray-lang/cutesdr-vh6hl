@@ -16,9 +16,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --enable-threads")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --enable-threads")
 
-set(CMAKE_PREFIX_PATH "/home/murray/Qt/6.9.1/gcc_64/lib/cmake")
+#set(CMAKE_PREFIX_PATH "/home/murray/Qt/6.9.1/gcc_64/lib/cmake")
 #set(CMAKE_PREFIX_PATH "/home/murray/Qt6.5/6.5.3/gcc_64/lib/cmake")
-set(DSPL_DIR "/home/murray/dev/tools/libdspl-2-0/_release")
+set(CMAKE_PREFIX_PATH "/home/murray/Qt/6.5.0/gcc_64/lib/cmake")
 
 
 set(VOLK_MIN_VERSION "2.4.1")         ## first version with CPU features
@@ -119,7 +119,7 @@ set(PROJECT_SOURCES
         dsp/stages/fir/kernels/BandStopFirKernel.h
         dsp/stages/fir/kernels/LowPassFirKernel.cpp
         dsp/stages/fir/kernels/LowPassFirKernel.h
-        ChartSignaller.h
+        DiagnosticSignaller.h
         dsp/stages/fir/OverlapBuffers.h
         dsp/utils/window.h
         dsp/utils/OverlapBuffers.h
@@ -158,7 +158,6 @@ target_include_directories(cutesdr-vk6hl PUBLIC
     /home/murray/Qt/Examples/Qt-6.5.0/multimedia/shared
     ${VOLK_INCLUDE_DIRS}
     /usr/include/hidapi/
-    ${DSPL_DIR}
 )
 target_link_directories(cutesdr-vk6hl PRIVATE ${DSPL_DIR})
 
@@ -173,7 +172,6 @@ target_link_libraries(cutesdr-vk6hl
     ${VOLK_LIBRARIES}
     usb-1.0
     hidapi-libusb
-    dspl
 )
 
 set_target_properties(cutesdr-vk6hl PROPERTIES

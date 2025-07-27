@@ -15,12 +15,12 @@
 #include "../../io/iq/IqSink.h"
 #include "../../dsp/stages/demodulators/AmDemodulator.h"
 #include "../../dsp/stages/fir/kernels/BandPassFirKernel.h"
-#include "../../ChartSignaller.h"
+#include "../../DiagnosticSignaller.h"
 
 //#define PING_PONG_LENGTH 2048
 #define PING_PONG_LENGTH 8192
 
-class IqReceiver : public IqSink , public ChartSignaller {
+class IqReceiver : public IqSink , public DiagnosticSignaller {
 public:
   IqReceiver(int32_t sampleRate, size_t defaultFftSize);
 

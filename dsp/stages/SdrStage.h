@@ -8,17 +8,10 @@
 class SdrStage
 {
 public:
-    typedef enum tagReturnCode
-    {
-      ERROR = -1,
-      OK,
-      NEED_MORE_INPUT
-    } ReturnCode;
-public:
-    virtual ReturnCode processSamples(ComplexPingPongBuffers& buffers, uint32_t inputLength, uint32_t* outputLength)
+    virtual uint32_t processSamples(ComplexPingPongBuffers& buffers, uint32_t inputLength)
     {
       buffers.flip();
-      return OK;
+      return inputLength;
     }
 };
 

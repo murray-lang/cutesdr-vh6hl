@@ -50,88 +50,119 @@ FftThread::~FftThread()
 void
 FftThread::add(const vsdrcomplex& samples, uint32_t length, bool complete)
 {
-    //if (complete) {
-    //    vsdrcomplex * fftInput = new vsdrcomplex(length);
-    //    for (uint32_t i = 0; i < length; i++) {
-    //        fftInput->at(i) = samples[i] * (sdrreal)hanning(i, length);
-    //    }
-   //     addToFft(fftInput);
-    //} else {
-        for (uint32_t i = 0; i < length; i++) {
-            add(samples[i]);
-        }
-   // }
-}
+  m_numProcessed++;
+  //qDebug() << "addToFft()" << m_numProcessed;
 
-void
-FftThread::add(const sdrcomplex& iq)
-{
-    if (m_fftQueue.length() > 2){
-        return;
-    }
-
-//    fftw_complex iq; // = { *pIqRaw[0], *pIqRaw[1]};
-    if (m_pNextFftInput == nullptr) {
-        m_pNextFftInput = new vsdrcomplex(m_defaultFftSize);
-    }
-    static quint32 nextFftIndex = 0;
-    //static sdrcomplex average(0.0, 0.0);
-    sdrreal window = hanning(nextFftIndex, m_defaultFftSize);
-    sdrcomplex next = iq * window;
-    m_pNextFftInput->at(nextFftIndex) = next;
-    //average += next;
-    nextFftIndex++;
-    if (nextFftIndex >= m_defaultFftSize) {
-        //average /= m_defaultFftSize;//sdrcomplex(m_fftSize, m_fftSize);
-        //for(uint32_t i = 0; i < m_fftSize; i++) {
-        //    m_pNextFftInput->at(i) -= average;
-        //}
-        //qDebug() << "Queue length ==" << m_fftQueue.length();
-        addToFft(m_pNextFftInput);
-        nextFftIndex = 0;
-        //average = sdrcomplex(0.0, 0.0);
-        m_pNextFftInput = nullptr;
-    }
-}
-
-void
-FftThread::addToFft(const vsdrcomplex* pfftInput)
-{
-    m_numProcessed++;
-    //qDebug() << "addToFft()" << m_numProcessed;
-
-    m_queueMutex.lock();
-    m_fftQueue.enqueue(pfftInput);
+  m_queueMutex.lock();
+  if (m_fftQueue.size() < 2){
+    m_fftQueue.emplace(samples);
+    m_fftQueue.back().resize(length);
     m_fftAdded.wakeOne();
-    m_queueMutex.unlock();
+  }
+  m_queueMutex.unlock();
+//    //if (complete) {
+//    //    vsdrcomplex * fftInput = new vsdrcomplex(length);
+//    //    for (uint32_t i = 0; i < length; i++) {
+//    //        fftInput->at(i) = samples[i] * (sdrreal)hanning(i, length);
+//    //    }
+//   //     addToFft(fftInput);
+//    //} else {
+//        for (uint32_t i = 0; i < length; i++) {
+//            add(samples[i]);
+//        }
+//   // }
 }
 
+//void
+//FftThread::_add(const sdrcomplex& iq)
+//{
+//    if (m_fftQueue.length() > 2){
+//        return;
+//    }
+//
+////    fftw_complex iq; // = { *pIqRaw[0], *pIqRaw[1]};
+//    if (m_pNextFftInput == nullptr) {
+//        m_pNextFftInput = new vsdrcomplex(m_defaultFftSize);
+//    }
+//    static quint32 nextFftIndex = 0;
+//    //static sdrcomplex average(0.0, 0.0);
+//    sdrreal window = hanning(nextFftIndex, m_defaultFftSize);
+//    sdrcomplex next = iq * window;
+//    m_pNextFftInput->at(nextFftIndex) = next;
+//    //average += next;
+//    nextFftIndex++;
+//    if (nextFftIndex >= m_defaultFftSize) {
+//        //average /= m_defaultFftSize;//sdrcomplex(m_fftSize, m_fftSize);
+//        //for(uint32_t i = 0; i < m_fftSize; i++) {
+//        //    m_pNextFftInput->at(i) -= average;
+//        //}
+//        //qDebug() << "Queue length ==" << m_fftQueue.length();
+//        addToFft(m_pNextFftInput);
+//        nextFftIndex = 0;
+//        //average = sdrcomplex(0.0, 0.0);
+//        m_pNextFftInput = nullptr;
+//    }
+//}
+
+//void
+//FftThread::add(const vsdrcomplex& iq)
+//{
+//  m_numProcessed++;
+//  //qDebug() << "addToFft()" << m_numProcessed;
+//
+//  m_queueMutex.lock();
+//  if (m_fftQueue.size() < 2){
+//    m_fftQueue.emplace(iq);
+//    m_fftAdded.wakeOne();
+//  }
+//  m_queueMutex.unlock();
+//}
+
+//void
+//FftThread::addToFft(const vsdrcomplex* pfftInput)
+//{
+//    m_numProcessed++;
+//    //qDebug() << "addToFft()" << m_numProcessed;
+//
+//    m_queueMutex.lock();
+//
+//    m_fftQueue.enqueue(pfftInput);
+//    m_fftAdded.wakeOne();
+//    m_queueMutex.unlock();
+//}
+
 void
-FftThread::run(void)
+FftThread::run()
 {
-    forever {
-
-        m_queueMutex.lock();
-        m_fftAdded.wait(&m_queueMutex);
-        if(m_abort) {
-            m_queueMutex.unlock();
-            cleanup();
-            qDebug() << "FftThread::run() - abort";
-            break;
-        }
-        while(m_fftQueue.length() > 0) {
-            const vsdrcomplex * pNextIqInput = m_fftQueue.dequeue();
-            processIq(pNextIqInput);
-        }
+  forever {
+    m_queueMutex.lock();
+    m_fftAdded.wait(&m_queueMutex);
+    if(m_abort) {
         m_queueMutex.unlock();
+        cleanup();
+        qDebug() << "FftThread::run() - abort";
+        break;
     }
+    if(m_fftQueue.empty()) {
+      m_queueMutex.unlock();
+      continue;
+    }
+    vsdrcomplex front = m_fftQueue.front();
+    m_fftQueue.pop();
+    m_queueMutex.unlock();
+    for(int i = 0; i < front.size(); i++)
+    {
+      front.at(i) = front.at(i) * (sdrreal)hanning(i, front.size());
+    }
+    processIq(front);
+  }
 }
 
 void
-FftThread::processIq(const vsdrcomplex* in)
+FftThread::processIq(const vsdrcomplex& in)
 {
   //SharedFftData sharedFftOut = SharedFftData(new vsdrcomplex(m_fftSize));
-  auto fftSize = in->size();
+  auto fftSize = in.size();
   auto out = vsdrcomplex(fftSize);
   pocketfft::shape_t pocketfft_shape{fftSize};
 
@@ -141,7 +172,7 @@ FftThread::processIq(const vsdrcomplex* in)
       m_pocketfft_stride,
       m_pocketfft_axes,
       pocketfft::FORWARD,
-      in->data(),
+      in.data(),
       out.data(),
       static_cast<sdrreal>(1.0)
   );
@@ -163,7 +194,7 @@ FftThread::processIq(const vsdrcomplex* in)
     spectrumAsReals.at(i) = spectrum.at(i);
   }
 
-  delete in;
+//  delete in;
 //  delete out;
     //SharedRealSeriesData sharedFftOut = SharedRealSeriesData(spectrum);
   emitFft(spectrumAsReals, fftSize);

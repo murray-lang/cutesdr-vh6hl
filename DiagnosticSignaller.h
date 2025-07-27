@@ -2,13 +2,13 @@
 // Created by murray on 15/03/25.
 //
 
-#ifndef CUTESDR_VK6HL_CHARTSIGNALLER_H
-#define CUTESDR_VK6HL_CHARTSIGNALLER_H
+#ifndef CUTESDR_VK6HL_DIAGNOSTICSIGNALLER_H
+#define CUTESDR_VK6HL_DIAGNOSTICSIGNALLER_H
 
 #include <QObject>
 #include "dsp/utils/FftData.h"
 
-class ChartSignaller : public QObject
+class DiagnosticSignaller : public QObject
 {
   Q_OBJECT
 public:
@@ -89,4 +89,4 @@ protected:
 
 };
 
-#endif //CUTESDR_VK6HL_CHARTSIGNALLER_H
+#endif //CUTESDR_VK6HL_DIAGNOSTICSIGNALLER_H

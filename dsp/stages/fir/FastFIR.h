@@ -51,7 +51,7 @@ public:
   uint32_t processSamples(
       PingPongBuffers<sampleType>& sampleBuffers,
       uint32_t inputLength,
-      ChartSignaller* chartSignaller
+      DiagnosticSignaller* chartSignaller
   )
   {
 //    sampleBuffers.flip();
@@ -93,7 +93,7 @@ public:
 //  uint32_t _processSamples(
 //      PingPongBuffers<sampleType>& sampleBuffers,
 //      uint32_t inputLength,
-//      ChartSignaller* chartSignaller
+//      DiagnosticSignaller* chartSignaller
 //  )
 //  {
 //    uint32_t outPos = 0;
@@ -122,19 +122,19 @@ private:
   void applyFilter(
       const std::vector<sdrcomplex>& input,
       std::vector<sdrcomplex>& output,
-      ChartSignaller* chartSignaller)
+      DiagnosticSignaller* chartSignaller)
   {
     applyFftCoefficients(input, output, chartSignaller);
 //    applyConvolution(input, output, chartSignaller);
 //    std::copy(input.begin(), input.end(), output.begin());
   }
 
-//  void applyFilter(PingPongBuffers<sdrreal>& buffers, ChartSignaller* chartSignaller)
+//  void applyFilter(PingPongBuffers<sdrreal>& buffers, DiagnosticSignaller* chartSignaller)
 //  {
 //    applyConvolution(buffers, chartSignaller);
 //  }
 
-  void applyFilter(const std::vector<sdrreal>& input, std::vector<sdrreal>& output, ChartSignaller* chartSignaller)
+  void applyFilter(const std::vector<sdrreal>& input, std::vector<sdrreal>& output, DiagnosticSignaller* chartSignaller)
   {
 //    applyConvolution(input, output, chartSignaller);
     applyFftCoefficients(input, output, chartSignaller);
@@ -143,7 +143,7 @@ private:
   void applyConvolution(
       const std::vector<sdrcomplex>& input,
       std::vector<sdrcomplex>& output,
-      ChartSignaller* chartSignaller)
+      DiagnosticSignaller* chartSignaller)
   {
     static uint32_t count = 0;
 //    std::copy(input.begin(), input.end(), output.begin());
@@ -163,7 +163,7 @@ private:
     qDebug() << count++;
   }
 
-  void applyConvolution(const std::vector<sdrreal>& input, std::vector<sdrreal>& output, ChartSignaller* chartSignaller)
+  void applyConvolution(const std::vector<sdrreal>& input, std::vector<sdrreal>& output, DiagnosticSignaller* chartSignaller)
   {
     const vsdrreal& sincPulse = m_kernel.getRealSincPulse();
     uint32_t inputSize = input.size();
@@ -184,7 +184,7 @@ private:
   void applyFftCoefficients(
       const std::vector<sampleType>& input,
       std::vector<sampleType>& output,
-      ChartSignaller* chartSignaller
+      DiagnosticSignaller* chartSignaller
   )
   {
     uint32_t inputSize = input.size();
@@ -208,9 +208,9 @@ private:
   }
 
   void multiplyByCoefficients(
-    const vsdrcomplex& values,
-    vsdrcomplex& result,
-    ChartSignaller* chartSignaller
+      const vsdrcomplex& values,
+      vsdrcomplex& result,
+      DiagnosticSignaller* chartSignaller
   )
   {
     if (chartSignaller != nullptr) {
@@ -228,9 +228,9 @@ private:
   }
 
   void multiplyByCoefficients(
-    const std::vector<sdrreal>& values,
-    std::vector<sdrreal>& result,
-    ChartSignaller* chartSignaller
+      const std::vector<sdrreal>& values,
+      std::vector<sdrreal>& result,
+      DiagnosticSignaller* chartSignaller
   )
   {
     if (chartSignaller != nullptr) {
@@ -245,7 +245,7 @@ private:
     );
   }
 
-  void fft(const vsdrcomplex& in, vsdrcomplex& out, bool isForward, ChartSignaller* chartSignaller)
+  void fft(const vsdrcomplex& in, vsdrcomplex& out, bool isForward, DiagnosticSignaller* chartSignaller)
   {
     pocketfft::c2c(
         m_pocketfft_shape,
@@ -268,7 +268,7 @@ private:
 
   }
 
-  void fft(const std::vector<sdrreal>& in, std::vector<sdrreal>& out, bool isForward, ChartSignaller* chartSignaller)
+  void fft(const std::vector<sdrreal>& in, std::vector<sdrreal>& out, bool isForward, DiagnosticSignaller* chartSignaller)
   {
 //    if (chartSignaller != nullptr) {
 //      chartSignaller->emitTimeseries(in, in.size(), false);

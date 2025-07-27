@@ -10,7 +10,7 @@ public:
     OscillatorInjector(int32_t sampleRate, int32_t frequency) : OscillatorStage(sampleRate, frequency) {}
     ~OscillatorInjector() override = default;
 
-  ReturnCode processSamples(ComplexPingPongBuffers& buffers, uint32_t inputLength, uint32_t* outputLength) override
+  uint32_t processSamples(ComplexPingPongBuffers& buffers, uint32_t inputLength) override
   {
     const vsdrcomplex& input = buffers.input();
     vsdrcomplex& output = buffers.output();
@@ -18,8 +18,7 @@ public:
         output[i] = m_oscillator + input[i];
         ++m_oscillator;
     }
-    *outputLength = inputLength;
-    return OK;
+    return inputLength;
   }
 };
 

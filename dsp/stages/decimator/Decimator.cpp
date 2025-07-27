@@ -1,7 +1,6 @@
 #include "Decimator.h"
 #include "../../utils/FilterCoefficients.h"
 #include <qdebug.h>
-#include <dspl.h>
 
 #define MAX_HALF_BAND_BUFSIZE 32768
 #define MIN_OUTPUT_RATE (7900*2)
@@ -102,53 +101,8 @@ Decimator::setInputDataRateAndOutputBandwidth(uint32_t inputRate, uint32_t bandw
   return m_outputRate;
 }
 
-// SdrStage::ReturnCode
-// Decimator::processSamples(ComplexPingPongBuffers& sampleBuffers, uint32_t inputLength, uint32_t* outputLength)
-// {
-//   uint32_t outPos = 0;
-//   const vsdrcomplex& samplesInput = sampleBuffers.input();
-//   vsdrcomplex& samplesOutput = sampleBuffers.output();
-//
-//   for (uint32_t inputIndex = 0; inputIndex < inputLength; inputIndex++)
-//   {
-//     const sdrcomplex& nextInput = samplesInput[inputIndex];
-//
-//     uint32_t inputBufferLength = m_inputOverlapBuffers.addSample(nextInput);
-//     if (inputBufferLength == m_bufferLength)
-//     {
-//       ComplexPingPongBuffers tempBuffers(m_bufferLength);
-//       std::copy(
-//           m_inputOverlapBuffers.current().begin(),
-//           m_inputOverlapBuffers.current().end(),
-//           tempBuffers.input().begin()
-//       );
-//       m_inputOverlapBuffers.cycle();
-//       uint32_t decimatedLength = decimate(tempBuffers, m_bufferLength);
-//       m_outputQueue.push(tempBuffers.output());
-//
-// //      qDebug() << tempBuffers.input().at(0).real() << "," << tempBuffers.input().at(1).real() << "," << tempBuffers.input().at(2).real() << "," << tempBuffers.input().at(3).real();
-//       // for(uint32_t decimatedIndex = 0; decimatedIndex < decimatedLength; decimatedIndex++)
-//       // {
-//       //   samplesOutput.at(outPos++) = tempBuffers.output().at(decimatedIndex);
-//       // }
-// //      m_overlapCursor = 0;
-//       m_nextInputCursor = 0;
-//       m_currentInputCursor = m_inputOverlap;
-//     }
-//   }
-//   if (m_outputQueue.size() < 2)
-//   {
-//     *outputLength = 0;
-//     return NEED_MORE_INPUT;
-//   }
-//   //qDebug() << outPos << ",";
-//   return OK;
-// }
-
-SdrStage::ReturnCode
-Decimator::processSamples(ComplexPingPongBuffers& sampleBuffers,
-                                       uint32_t inputLength,
-                                       uint32_t* outputLength)
+uint32_t
+Decimator::processSamples(ComplexPingPongBuffers& sampleBuffers, uint32_t inputLength)
 {
   // Each stage's Decimate() method handles its own state preservation
   uint32_t n = inputLength;
@@ -157,9 +111,7 @@ Decimator::processSamples(ComplexPingPongBuffers& sampleBuffers,
     n = iter.next()->Decimate(sampleBuffers, n);
     sampleBuffers.flip();
   }
-
-  *outputLength = n;
-  return OK;
+  return n;
 }
 
 
