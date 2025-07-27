@@ -503,7 +503,7 @@ MainWindow::initialiseRadio()
   FunCubeDongle fcd;
   RadioSettings radioSettings;
   radioSettings.rxSettings.push_back({
-   .rfSettings = { .frequency = 10000000, .gain = 0.0 },
+   .rfSettings = { .frequency = 10000000, .gain = 10.0 },
    .ifSettings = { .bandwidth = 200000, .gain = 0.0 }
   });
   try {

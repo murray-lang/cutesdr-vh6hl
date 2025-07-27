@@ -72,7 +72,6 @@ IqReceiver::sink(sdrreal i, sdrreal q)
 uint32_t
 IqReceiver::processSamples(ComplexPingPongBuffers& buffers, uint32_t inputLength)
 {
-  SdrStage::ReturnCode rc = SdrStage::OK;
 //  qDebug() << inputLength << ", ";
 //  const vsdrcomplex& coefficients = m_ifFilter.getKernel().getComplexCoefficients();
 //  emitTimeseries(coefficients, coefficients.size(), false);
@@ -81,7 +80,7 @@ IqReceiver::processSamples(ComplexPingPongBuffers& buffers, uint32_t inputLength
 //  emitTimeseries(kernel, kernel.size(), false);
 
   uint32_t outputLength = inputLength;
-  m_fftThread.add(buffers.input(), outputLength);
+//  m_fftThread.add(buffers.input(), outputLength);
   //m_dcShift.setShift(average);
 
 //  outputLength = m_dcShift.processSamples(buffers, outputLength);
@@ -96,35 +95,16 @@ IqReceiver::processSamples(ComplexPingPongBuffers& buffers, uint32_t inputLength
 //    outputLength = m_signal3.processSamples(buffers, outputLength);
 //    buffers.flip();
 
-  rc = m_oscillatorMixer.processSamples(buffers, outputLength, &outputLength);
+  outputLength = m_oscillatorMixer.processSamples(buffers, outputLength);
   //emitTimeseries(buffers.output(), outputLength);
-  // m_fftThread.add(buffers.output(), outputLength, true);
+  m_fftThread.add(buffers.output(), outputLength, true);
   buffers.flip();
 
 //  emitTimeseries(buffers.input(), outputLength, false);
 
-  // ComplexPingPongBuffers testbuffers1(4);
-  // testbuffers1.input().at(0) = sdrcomplex(1.0, 0.0);
-  // testbuffers1.input().at(1) = sdrcomplex(2.0, 0.0);
-  // testbuffers1.input().at(2) = sdrcomplex(3.0, 0.0);
-  // testbuffers1.input().at(3) = sdrcomplex(4.0, 0.0);
-  // rc = m_decimator.processSamples(testbuffers1, 4, &outputLength);
-  //
-  // ComplexPingPongBuffers testbuffers2(4);
-  // testbuffers2.input().at(0) = sdrcomplex(5.0, 0.0);
-  // testbuffers2.input().at(1) = sdrcomplex(6.0, 0.0);
-  // testbuffers2.input().at(2) = sdrcomplex(7.0, 0.0);
-  // testbuffers2.input().at(3) = sdrcomplex(8.0, 0.0);
-  // rc = m_decimator.processSamples(testbuffers2, 4, &outputLength);
-  //
-  // ComplexPingPongBuffers testbuffers3(4);
-  // testbuffers3.input().at(0) = sdrcomplex(9.0, 0.0);
-  // testbuffers3.input().at(1) = sdrcomplex(10.0, 0.0);
-  // testbuffers3.input().at(2) = sdrcomplex(11.0, 0.0);
-  // testbuffers3.input().at(3) = sdrcomplex(12.0, 0.0);
   // rc = m_decimator.processSamples(testbuffers3, 4, &outputLength);
-  // rc = m_decimator.processSamples(buffers, outputLength, &outputLength);
-  m_myDecimator.decimate(buffers, outputLength, &outputLength);
+  outputLength = m_decimator.processSamples(buffers, outputLength);
+//  m_myDecimator.decimate(buffers, outputLength, &outputLength);
 //  emitTimeseries(buffers.output(), outputLength);
 //  m_fftThread.add(buffers.output(), outputLength, true);
   buffers.flip();

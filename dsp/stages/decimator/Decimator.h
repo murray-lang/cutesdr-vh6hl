@@ -91,7 +91,7 @@ public:
 
   uint32_t setInputDataRateAndOutputBandwidth(uint32_t inputRate, uint32_t bandwidth);
 
-  ReturnCode processSamples(ComplexPingPongBuffers& buffers, uint32_t inputLength, uint32_t* outputLength) override;
+  uint32_t processSamples(ComplexPingPongBuffers& buffers, uint32_t inputLength) override;
 
   [[nodiscard]] uint32_t getOutputRate() const { return m_outputRate; }
 
