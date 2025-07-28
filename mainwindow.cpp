@@ -11,12 +11,14 @@
 #include "io/control/usb/UsbException.h"
 #include "io/control/device/FunCubeDongle/FunCubeDongle.h"
 #include "io/control/device/DeviceControlException.h"
+#include "radio/config/AudioConfig.h"
 
 #define FFT_SIZE 2048
 #define SAMPLE_RATE 192000
 
-MainWindow::MainWindow(QWidget *parent)
+MainWindow::MainWindow(RadioConfig& radioConfig, QWidget *parent)
     : QMainWindow(parent)
+    , m_radioConfig(radioConfig)
     , m_mediaDevices(new QMediaDevices(this))
 //    , m_iqProcessor(2048)
     , m_pIqReceiver(nullptr)
@@ -365,15 +367,17 @@ void MainWindow::initializeAudio()
     m_audioSink->start(m_audioOutput.data());
     m_audioSink->setVolume(1.0);
 
-    QAudioDevice deviceInfo = IqAudioDevice::findDevice("FUNcube");
+    AudioConfig& iqAudioConfig = m_radioConfig.getReceiver().getIqInput();
+
+    QAudioDevice deviceInfo = IqAudioDevice::findDevice(iqAudioConfig.getSearchExpression());
     // QAudioDevice deviceInfo = IqAudioDevice::findDevice("Built-in");
     QAudioFormat format;
     //format.setSampleRate(8000);
     //format.setChannelCount(1);
     // format.setSampleRate(deviceInfo.preferredFormat().sampleRate());
     // format.setChannelCount(deviceInfo.preferredFormat().channelCount());
-    format.setSampleRate(192000);
-    format.setChannelCount(2);
+    format.setSampleRate(static_cast<int>(iqAudioConfig.getSampleRate()));
+    format.setChannelCount(static_cast<int>(iqAudioConfig.getChannelCount()));
     format.setSampleFormat(deviceInfo.preferredFormat().sampleFormat());
     // format.setSampleFormat(QAudioFormat::Int16);
     format.setChannelConfig(QAudioFormat::ChannelConfigStereo);

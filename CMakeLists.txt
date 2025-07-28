@@ -127,6 +127,12 @@ set(PROJECT_SOURCES
         io/audio/AudioOutput.cpp
         io/audio/AudioOutput.h
         dsp/stages/metering/MeteringStage.h
+        radio/config/RadioConfig.h
+        radio/config/ReceiverConfig.h
+        radio/config/TransmitterConfig.h
+        radio/config/AudioConfig.h
+        radio/config/JsonConfig.h
+        radio/config/ConfigException.h
 
 )
 
@@ -158,6 +164,7 @@ target_include_directories(cutesdr-vk6hl PUBLIC
     /home/murray/Qt/Examples/Qt-6.5.0/multimedia/shared
     ${VOLK_INCLUDE_DIRS}
     /usr/include/hidapi/
+    /home/murray/dev/json/include
 )
 target_link_directories(cutesdr-vk6hl PRIVATE ${DSPL_DIR})
 

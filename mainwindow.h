@@ -13,6 +13,7 @@
 #include <QAreaSeries>
 
 #include "io/audio/AudioOutput.h"
+#include "radio/config/RadioConfig.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -23,7 +24,7 @@ class MainWindow : public QMainWindow
   Q_OBJECT
 
 public:
-  explicit MainWindow(QWidget *parent = nullptr);
+  MainWindow(RadioConfig& radioConfig, QWidget *parent = nullptr);
   ~MainWindow() override;
 
 public slots:
@@ -55,6 +56,7 @@ private:
 
   void initialiseRadio();
 private:
+  RadioConfig m_radioConfig;
   Ui::MainWindow *ui;
 
   QMediaDevices * m_mediaDevices;
