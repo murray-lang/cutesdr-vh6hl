@@ -40,6 +40,8 @@ public:
 
   qint64 writeData(const char *data, qint64 length) override
   {
+    // QThread::currentThread()->setPriority(QThread::HighestPriority);
+
     m_sampleCursor.reset((const int8_t *) data, length, false);
     size_t numFrames = length/m_format.bytesPerFrame();
 

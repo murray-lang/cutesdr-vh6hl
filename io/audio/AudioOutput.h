@@ -24,7 +24,7 @@ public:
   qint64 bytesAvailable() const override;
   qint64 size() const override;
 
-  uint32_t addAudioData(const vsdrreal& data);
+  uint32_t addAudioData(const vsdrreal& data, uint32_t length);
 
 private:
   QAudioFormat m_format;

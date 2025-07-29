@@ -18,13 +18,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 #set(CMAKE_PREFIX_PATH "/home/murray/Qt/6.9.1/gcc_64/lib/cmake")
 #set(CMAKE_PREFIX_PATH "/home/murray/Qt6.5/6.5.3/gcc_64/lib/cmake")
-set(CMAKE_PREFIX_PATH "/home/murray/Qt/6.5.0/gcc_64/lib/cmake")
+#set(CMAKE_PREFIX_PATH "/home/murray/Qt/6.5.0/gcc_64/lib/cmake")
+set(CMAKE_PREFIX_PATH "/usr/lib/aarch-linux-gnu/cmake")
+
 
 
 set(VOLK_MIN_VERSION "2.4.1")         ## first version with CPU features
 
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_SOURCE_DIR}/cmake/modules")
 
+find_package(nlohmann_json 3.11.3 REQUIRED)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Gui Multimedia Widgets Charts Multimedia)
 find_library(HIDAPI_LIBRARY hidapi-libusb)
@@ -179,6 +182,7 @@ target_link_libraries(cutesdr-vk6hl
     ${VOLK_LIBRARIES}
     usb-1.0
     hidapi-libusb
+    nlohmann_json::nlohmann_json
 )
 
 set_target_properties(cutesdr-vk6hl PROPERTIES

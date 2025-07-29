@@ -55,10 +55,14 @@ FftThread::add(const vsdrcomplex& samples, uint32_t length, bool complete)
 
   m_queueMutex.lock();
   if (m_fftQueue.size() < 2){
+    // qDebug() << "Adding buffer to FFT thread queue";
     m_fftQueue.emplace(samples);
     m_fftQueue.back().resize(length);
-    m_fftAdded.wakeOne();
+  } else
+  {
+    // qDebug() << "FFT thread queue full!";
   }
+  m_fftAdded.wakeOne();
   m_queueMutex.unlock();
 //    //if (complete) {
 //    //    vsdrcomplex * fftInput = new vsdrcomplex(length);
@@ -136,7 +140,9 @@ FftThread::run()
 {
   forever {
     m_queueMutex.lock();
+    // qDebug() << "Waiting for FFT buffer available event";
     m_fftAdded.wait(&m_queueMutex);
+    // qDebug() << "FFT buffer event received";
     if(m_abort) {
         m_queueMutex.unlock();
         cleanup();
@@ -147,14 +153,20 @@ FftThread::run()
       m_queueMutex.unlock();
       continue;
     }
-    vsdrcomplex front = m_fftQueue.front();
-    m_fftQueue.pop();
+    std::queue<vsdrcomplex> copyOfQueue;
+    copyOfQueue.swap(m_fftQueue);
     m_queueMutex.unlock();
-    for(int i = 0; i < front.size(); i++)
+    while (!copyOfQueue.empty())
     {
-      front.at(i) = front.at(i) * (sdrreal)hanning(i, front.size());
+      vsdrcomplex front = copyOfQueue.front();
+      copyOfQueue.pop();
+      // qDebug() << "Popping buffer";
+      for(int i = 0; i < front.size(); i++)
+      {
+        front.at(i) = front.at(i) * (sdrreal)hanning(i, front.size());
+      }
+      processIq(front);
     }
-    processIq(front);
   }
 }
 
