@@ -57,13 +57,14 @@ AudioOutput::size() const
 }
 
 uint32_t
-AudioOutput::addAudioData(const vsdrreal& data)
+AudioOutput::addAudioData(const vsdrreal& data, const uint32_t length)
 {
   qint64 numWritten = 0;
   char * bufferData = m_audioBuffer.data();
   // std::for_each(data.begin(), data.end(), [this, bufferData, numWritten](const sdrreal& sample) mutable
-  for (const sdrreal& sample : data)
+  for (uint32_t i = 0; i < length; ++i)
   {
+    const sdrreal& sample = data.at(i);
     sdrreal scaled;
     switch (m_format.sampleFormat())
     {

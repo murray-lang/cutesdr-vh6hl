@@ -12,7 +12,7 @@ class UsbControl {
 
 public:
     UsbControl(uint16_t vendorId, uint16_t productId);
-
+    virtual ~UsbControl() = default;
     virtual void initialise() = 0;
     virtual bool discover() = 0;
     virtual void open() = 0;

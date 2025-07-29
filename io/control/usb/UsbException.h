@@ -11,6 +11,7 @@ class UsbException : public std::runtime_error
 {
 public:
     explicit UsbException(const std::string& what);
+    explicit UsbException(const std::wstring& what);
 };
 
 #endif //FUNCUBEPLAY_USBEXCEPTION_H

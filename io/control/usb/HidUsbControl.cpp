@@ -38,7 +38,9 @@ void HidUsbControl::open()
 {
     device = hid_open(this->vendorId, this->productId, nullptr);
     if (device == nullptr) {
-        throw UsbException("Error opening HID USB io");
+        std::wstring hidError = L"Error opening HID USB io: ";
+        hidError.append( hid_error(NULL));
+        throw UsbException(hidError);
     }
 }
 

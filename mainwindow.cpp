@@ -11,12 +11,14 @@
 #include "io/control/usb/UsbException.h"
 #include "io/control/device/FunCubeDongle/FunCubeDongle.h"
 #include "io/control/device/DeviceControlException.h"
+#include "radio/config/AudioConfig.h"
 
 #define FFT_SIZE 2048
 #define SAMPLE_RATE 192000
 
-MainWindow::MainWindow(QWidget *parent)
+MainWindow::MainWindow(RadioConfig& radioConfig, QWidget *parent)
     : QMainWindow(parent)
+    , m_radioConfig(radioConfig)
     , m_mediaDevices(new QMediaDevices(this))
 //    , m_iqProcessor(2048)
     , m_pIqReceiver(nullptr)
@@ -266,7 +268,7 @@ MainWindow::newComplexTimeseries(const SharedComplexSeriesData& timeseries)
 void
 MainWindow::newAudioData(const SharedRealSeriesData& audioData) const
 {
-  m_audioOutput->addAudioData(*audioData.data());
+  m_audioOutput->addAudioData(*audioData.data(), audioData.data()->size());
 }
 
 void
@@ -365,26 +367,30 @@ void MainWindow::initializeAudio()
     m_audioSink->start(m_audioOutput.data());
     m_audioSink->setVolume(1.0);
 
-    QAudioDevice deviceInfo = IqAudioDevice::findDevice("FUNcube");
+    AudioConfig& iqAudioConfig = m_radioConfig.getReceiver().getIqInput();
+
+    QAudioDevice deviceInfo = IqAudioDevice::findDevice(iqAudioConfig.getSearchExpression());
     // QAudioDevice deviceInfo = IqAudioDevice::findDevice("Built-in");
     QAudioFormat format;
     //format.setSampleRate(8000);
     //format.setChannelCount(1);
     // format.setSampleRate(deviceInfo.preferredFormat().sampleRate());
+    qDebug() << "Preferred sample rate: " << deviceInfo.preferredFormat().sampleRate();
     // format.setChannelCount(deviceInfo.preferredFormat().channelCount());
-    format.setSampleRate(192000);
-    format.setChannelCount(2);
+    format.setSampleRate(static_cast<int>(iqAudioConfig.getSampleRate()));
+    qDebug() << "Sample rate after setting: " << format.sampleRate();
+    format.setChannelCount(static_cast<int>(iqAudioConfig.getChannelCount()));
     format.setSampleFormat(deviceInfo.preferredFormat().sampleFormat());
     // format.setSampleFormat(QAudioFormat::Int16);
     format.setChannelConfig(QAudioFormat::ChannelConfigStereo);
     //format.setSampleFormat(QAudioFormat::Int16);
 
-    m_pIqReceiver = new IqReceiver(SAMPLE_RATE, FFT_SIZE);
+    m_pIqReceiver = new IqReceiver(SAMPLE_RATE, FFT_SIZE, m_audioOutput.data());
     connect(m_pIqReceiver, &IqReceiver::signalRealFftAvailable, this, &MainWindow::newRealFft);
     connect(m_pIqReceiver, &IqReceiver::signalComplexFftAvailable, this, &MainWindow::newComplexFft);
     connect(m_pIqReceiver, &IqReceiver::signalRealTimeseriesAvailable, this, &MainWindow::newRealTimeseries);
     connect(m_pIqReceiver, &IqReceiver::signalComplexTimeseriesAvailable, this, &MainWindow::newComplexTimeseries);
-    connect(m_pIqReceiver, &IqReceiver::signalAudioDataAvailable, this, &MainWindow::newAudioData);
+    connect(m_pIqReceiver, &IqReceiver::signalAudioDataAvailable, this, &MainWindow::newAudioData, Qt::DirectConnection);
 
     //IqAudioDevice* newInfo = new IqAudioDevice(format, &m_iqProcessor);
     auto *newInfo = new IqAudioDevice(format, m_pIqReceiver);

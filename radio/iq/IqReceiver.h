@@ -17,13 +17,14 @@
 #include "../../dsp/stages/filters/kernels/BandPassFirKernel.h"
 #include "../../DiagnosticSignaller.h"
 #include "../../dsp/stages/metering/MeteringStage.h"
+#include "../../io/audio/AudioOutput.h"
 
 //#define PING_PONG_LENGTH 2048
 #define PING_PONG_LENGTH 8192
 
 class IqReceiver : public IqSink , public DiagnosticSignaller {
 public:
-  IqReceiver(int32_t sampleRate, size_t defaultFftSize);
+  IqReceiver(int32_t sampleRate, size_t defaultFftSize, AudioOutput* audioOutput);
 
   ~IqReceiver() override = default;
 
@@ -64,6 +65,7 @@ protected:
   AmDemodulator* m_pDemodulator;
   MeteringStage m_timeseriesEmitter;
   MeteringStage m_spectrumEmitter;
+  AudioOutput* m_audioOutput;
 };
 
 #endif //__SDR_H__

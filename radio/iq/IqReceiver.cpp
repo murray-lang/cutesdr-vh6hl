@@ -4,9 +4,9 @@
 #include <cstdlib>
 #include <complex>
 
-const int32_t lo = 48000;
+const int32_t lo = 10000;
 
-IqReceiver::IqReceiver(int32_t sampleRate, size_t fftSize) :
+IqReceiver::IqReceiver(int32_t sampleRate, size_t fftSize, AudioOutput* audioOutput) :
     m_fftThread(fftSize),
     m_inputCount(0),
     m_dcShift(sdrcomplex(0.00447, 0.00348)),
@@ -23,7 +23,8 @@ IqReceiver::IqReceiver(int32_t sampleRate, size_t fftSize) :
     m_afFilter(fftSize),
     m_pDemodulator(nullptr),
     m_timeseriesEmitter("timeseries", MeteringStage::eTIMESERIES, *this, m_fftThread),
-    m_spectrumEmitter("spectrum", MeteringStage::eSPECTRUM, *this, m_fftThread)
+    m_spectrumEmitter("spectrum", MeteringStage::eSPECTRUM, *this, m_fftThread),
+    m_audioOutput(audioOutput)
 {
   m_iqStages.push_back(&m_spectrumEmitter);
   m_iqStages.push_back(&m_oscillatorMixer);
@@ -49,6 +50,7 @@ IqReceiver::IqReceiver(int32_t sampleRate, size_t fftSize) :
   m_ifFilter.getKernel().configure(
      -3500.0,
      3500.0,
+
      0.0,
      decimatorOutputRate*2);
 
@@ -79,6 +81,7 @@ IqReceiver::sink(sdrreal i, sdrreal q)
 uint32_t
 IqReceiver::processSamples(ComplexPingPongBuffers& buffers, uint32_t inputLength)
 {
+  // qDebug() << inputLength;
   uint32_t outputLength = inputLength;
 
   for (auto stage : m_iqStages) {
@@ -93,9 +96,10 @@ IqReceiver::processSamples(ComplexPingPongBuffers& buffers, uint32_t inputLength
 //     audiosamples.at(i) = sdrcomplex(m_afBuffers.input().at(i), 0.0f);
 // //    audiosamples.at(i) = buffers.output().at(i).real();
 //   }
+  // qDebug() << "Have " << outputLength << " audio samples";
   emitTimeseries(m_afBuffers.input(), outputLength);
-  emitAudioData(m_afBuffers.input(), outputLength);
-
+  //emitAudioData(m_afBuffers.input(), outputLength);
+  m_audioOutput->addAudioData(m_afBuffers.input(), outputLength);
   // m_fftThread.add(audiosamples, outputLength, true);
   //const vsdrcomplex& sincPulse = m_afFilter.getKernel().getComplexSincPulse();
 
