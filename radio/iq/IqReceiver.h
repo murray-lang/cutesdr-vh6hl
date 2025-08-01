@@ -49,7 +49,7 @@ protected:
 protected:
   //QAudioFormat m_audioFormat;
   std::vector<IqStage*> m_iqStages;
-  FftThread m_fftThread;
+  // FftThread m_fftThread;
   size_t m_inputCount;
   DcShift m_dcShift;
   OscillatorMixer m_oscillatorMixer;
@@ -63,8 +63,8 @@ protected:
   BandPassFilter m_ifFilter;
   BandPassFilter m_afFilter;
   AmDemodulator* m_pDemodulator;
-  MeteringStage m_timeseriesEmitter;
-  MeteringStage m_spectrumEmitter;
+  // MeteringStage m_timeseriesEmitter;
+  // MeteringStage m_spectrumEmitter;
   AudioOutput* m_audioOutput;
 };
 

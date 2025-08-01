@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
 {
   // std::this_thread::sleep_for(std::chrono::seconds(5));
   RadioConfig radioConfig;
-  std::ifstream f("/home/murray/dev/sdr/cutesdr-vk6hl/config.json");
+  std::ifstream f("/home/murray/dev/code/sdr/cutesdr-vk6hl/config.json");
   json config = json::parse(f);
   if (config.contains("radio")) {
     radioConfig = RadioConfig::fromJson(config["radio"]);

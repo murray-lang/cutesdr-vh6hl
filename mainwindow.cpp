@@ -12,6 +12,7 @@
 #include "io/control/device/FunCubeDongle/FunCubeDongle.h"
 #include "io/control/device/DeviceControlException.h"
 #include "radio/config/AudioConfig.h"
+#include <volk/volk.h>
 
 #define FFT_SIZE 2048
 #define SAMPLE_RATE 192000
@@ -87,6 +88,8 @@ MainWindow::~MainWindow()
     disconnect(m_pIqReceiver, &IqReceiver::signalRealTimeseriesAvailable, this, &MainWindow::newRealTimeseries);
     disconnect(m_pIqReceiver, &IqReceiver::signalComplexTimeseriesAvailable, this, &MainWindow::newComplexTimeseries);
     disconnect(m_pIqReceiver, &IqReceiver::signalAudioDataAvailable, this, &MainWindow::newAudioData);
+    disconnect(m_pIqReceiver, &IqReceiver::signalComplexSignal, this, &MainWindow::newComplexSignal);
+    disconnect(m_pIqReceiver, &IqReceiver::signalRealSignal, this, &MainWindow::newRealSignal);
     delete m_pIqReceiver;
   }
   delete ui;
@@ -272,49 +275,99 @@ MainWindow::newAudioData(const SharedRealSeriesData& audioData) const
 }
 
 void
-MainWindow::calcSpectrumSeries(const std::vector<sdrreal> * spectrumData, QLineSeries& spectrumSeries )
+MainWindow::newRealSignal(const std::string& contextId, const SharedRealSeriesData& timeseriesData, uint32_t length)
 {
-  QList<QPointF> spectrumPoints;
-  uint32_t plotX = 0;
-  size_t fftSize = spectrumData->size();
-//  for (size_t bin = fftSize/2; bin < fftSize; bin++) {
-//      //double absolute = std::log10(std::abs(fftOut->at(bin)));
-//      spectrumPoints.append(QPointF(plotX++, spectrumData->at(bin)));
-//  }
-//  for (size_t bin = 0; bin < fftSize/2 -1; bin++) {
-//      //double absolute = std::log10(std::abs(fftOut->at(bin)));
-//      spectrumPoints.append(QPointF(plotX++, spectrumData->at(bin)));
-//  }
-  for (size_t bin = 0; bin < fftSize; bin++) {
-    //double absolute = std::log10(std::abs(fftOut->at(bin)));
-    spectrumPoints.append(QPointF(plotX++, spectrumData->at(bin)));
-  }
 
-    spectrumSeries.replace(spectrumPoints);
+}
+void
+MainWindow::newComplexSignal(const std::string& contextId, const SharedComplexSeriesData& timeseriesData, uint32_t length)
+{
+  vsdrreal spectrum(length);
+  powerSpectrum(*timeseriesData, length, spectrum);
+  if (spectrum.size() != m_panadapterXmax) {
+    setPanadapterX(0, spectrum.size());
+  }
+  calcSpectrumSeries(&spectrum, m_spectrumLineSeries, true);
 }
 
 void
-MainWindow::calcSpectrumSeries(const std::vector<sdrcomplex> * spectrumData, QLineSeries& spectrumSeries )
+MainWindow::powerSpectrum(const vsdrcomplex& timeSeries, uint32_t timeSeriesLength, vsdrreal& spectrumOut)
+{
+  vsdrcomplex windowed(timeSeriesLength);
+  for (uint32_t i = 0; i < timeSeriesLength; i++)
+  {
+    windowed.at(i) = timeSeries.at(i) * static_cast<sdrreal>(hanning(i, timeSeriesLength));
+  }
+  pocketfft::shape_t pocketfft_shape{timeSeriesLength};
+  std::vector<sdrcomplex> fftOut(timeSeriesLength);
+
+  spectrumOut.resize(timeSeriesLength);
+
+  pocketfft::stride_t pocketfft_stride{sizeof(sdrcomplex)};
+  pocketfft::shape_t pocketfft_axes{0};
+
+  pocketfft::c2c(
+      pocketfft_shape,
+      pocketfft_stride,
+      pocketfft_stride,
+      pocketfft_axes,
+      pocketfft::FORWARD,
+      windowed.data(),
+      fftOut.data(),
+      static_cast<sdrreal>(1.0)
+  );
+
+  volk_32fc_s32f_x2_power_spectral_density_32f(
+    spectrumOut.data(),
+    fftOut.data(),
+    static_cast<float>(timeSeriesLength), 1.0,
+    timeSeriesLength
+  );
+}
+
+void
+MainWindow::calcSpectrumSeries(const vsdrreal * spectrumData, QLineSeries& spectrumSeries, bool shuffle )
 {
   QList<QPointF> spectrumPoints;
   uint32_t plotX = 0;
   size_t fftSize = spectrumData->size();
-//  for (size_t bin = fftSize/2; bin < fftSize; bin++) {
-//    //double absolute = std::log10(std::abs(fftOut->at(bin)));
-//    spectrumPoints.append(QPointF(plotX++, std::abs(spectrumData->at(bin))));
-//  }
-//  for (size_t bin = 0; bin < fftSize/2 -1; bin++) {
-//    //double absolute = std::log10(std::abs(fftOut->at(bin)));
-//    spectrumPoints.append(QPointF(plotX++, std::abs(spectrumData->at(bin))));
-//  }
-  for (size_t bin = 0; bin < fftSize; bin++) {
-    //double absolute = std::log10(std::abs(fftOut->at(bin)));
-    const sdrcomplex& cpx = spectrumData->at(bin);
-//    spectrumPoints.append(QPointF(plotX++, std::hypot(cpx.real(), cpx.imag())));
-    spectrumPoints.append(QPointF(plotX++, cpx.real()));
-
+  if (shuffle)
+  {
+    for (size_t bin = fftSize/2; bin < fftSize; bin++) {
+      spectrumPoints.append(QPointF(plotX++, spectrumData->at(bin)));
+    }
+    for (size_t bin = 0; bin < fftSize/2 -1; bin++) {
+      spectrumPoints.append(QPointF(plotX++, spectrumData->at(bin)));
+    }
+  } else
+  {
+    for (size_t bin = 0; bin < fftSize; bin++) {
+      spectrumPoints.append(QPointF(plotX++, spectrumData->at(bin)));
+    }
   }
+  spectrumSeries.replace(spectrumPoints);
+}
 
+void
+MainWindow::calcSpectrumSeries(const std::vector<sdrcomplex> * spectrumData, QLineSeries& spectrumSeries, bool shuffle )
+{
+  QList<QPointF> spectrumPoints;
+  uint32_t plotX = 0;
+  size_t fftSize = spectrumData->size();
+  if (shuffle)
+  {
+    for (size_t bin = fftSize/2; bin < fftSize; bin++) {
+      spectrumPoints.append(QPointF(plotX++, std::abs(spectrumData->at(bin))));
+    }
+    for (size_t bin = 0; bin < fftSize/2 -1; bin++) {
+      spectrumPoints.append(QPointF(plotX++, std::abs(spectrumData->at(bin))));
+    }
+  } else
+  {
+    for (size_t bin = 0; bin < fftSize; bin++) {
+      spectrumPoints.append(QPointF(plotX++, std::abs(spectrumData->at(bin))));
+    }
+  }
   spectrumSeries.replace(spectrumPoints);
 }
 
@@ -354,6 +407,9 @@ void MainWindow::initializeAudio()
     disconnect(m_pIqReceiver, &IqReceiver::signalComplexTimeseriesAvailable, this, &MainWindow::newComplexTimeseries);
     disconnect(m_pIqReceiver, &IqReceiver::signalAudioDataAvailable, this, &MainWindow::newAudioData);
 
+    disconnect(m_pIqReceiver, &IqReceiver::signalComplexSignal, this, &MainWindow::newComplexSignal);
+    disconnect(m_pIqReceiver, &IqReceiver::signalRealSignal, this, &MainWindow::newRealSignal);
+
     delete m_pIqReceiver;
     m_pIqReceiver = nullptr;
   }
@@ -368,8 +424,8 @@ void MainWindow::initializeAudio()
     m_audioSink->setVolume(1.0);
 
     AudioConfig& iqAudioConfig = m_radioConfig.getReceiver().getIqInput();
-
-    QAudioDevice deviceInfo = IqAudioDevice::findDevice(iqAudioConfig.getSearchExpression());
+    std::string searchExpression = iqAudioConfig.getSearchExpression();
+    QAudioDevice deviceInfo = IqAudioDevice::findDevice(searchExpression);
     // QAudioDevice deviceInfo = IqAudioDevice::findDevice("Built-in");
     QAudioFormat format;
     //format.setSampleRate(8000);
@@ -391,6 +447,9 @@ void MainWindow::initializeAudio()
     connect(m_pIqReceiver, &IqReceiver::signalRealTimeseriesAvailable, this, &MainWindow::newRealTimeseries);
     connect(m_pIqReceiver, &IqReceiver::signalComplexTimeseriesAvailable, this, &MainWindow::newComplexTimeseries);
     connect(m_pIqReceiver, &IqReceiver::signalAudioDataAvailable, this, &MainWindow::newAudioData, Qt::DirectConnection);
+
+    connect(m_pIqReceiver, &IqReceiver::signalComplexSignal, this, &MainWindow::newComplexSignal);
+    connect(m_pIqReceiver, &IqReceiver::signalRealSignal, this, &MainWindow::newRealSignal);
 
     //IqAudioDevice* newInfo = new IqAudioDevice(format, &m_iqProcessor);
     auto *newInfo = new IqAudioDevice(format, m_pIqReceiver);
