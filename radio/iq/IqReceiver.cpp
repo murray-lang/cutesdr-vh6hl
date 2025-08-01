@@ -4,10 +4,10 @@
 #include <cstdlib>
 #include <complex>
 
-const int32_t lo = 10000;
+const int32_t lo = 48000;
 
 IqReceiver::IqReceiver(int32_t sampleRate, size_t fftSize, AudioOutput* audioOutput) :
-    m_fftThread(fftSize),
+    // m_fftThread(fftSize),
     m_inputCount(0),
     m_dcShift(sdrcomplex(0.00447, 0.00348)),
     m_oscillatorMixer(sampleRate, -lo),
@@ -22,22 +22,22 @@ IqReceiver::IqReceiver(int32_t sampleRate, size_t fftSize, AudioOutput* audioOut
     m_ifFilter(fftSize),
     m_afFilter(fftSize),
     m_pDemodulator(nullptr),
-    m_timeseriesEmitter("timeseries", MeteringStage::eTIMESERIES, *this, m_fftThread),
-    m_spectrumEmitter("spectrum", MeteringStage::eSPECTRUM, *this, m_fftThread),
+    // m_timeseriesEmitter("timeseries", MeteringStage::eTIMESERIES, *this, m_fftThread),
+    // m_spectrumEmitter("spectrum", MeteringStage::eSPECTRUM, *this, m_fftThread),
     m_audioOutput(audioOutput)
 {
-  m_iqStages.push_back(&m_spectrumEmitter);
+  // m_iqStages.push_back(&m_spectrumEmitter);
   m_iqStages.push_back(&m_oscillatorMixer);
   m_iqStages.push_back(&m_myDecimator);
   m_iqStages.push_back(&m_ifFilter);
 
-  connect(
-      &m_fftThread,
-      &FftThread::signalRealFftAvailable,
-      this,
-      &IqReceiver::signalRealFftAvailable,
-      Qt::QueuedConnection
-  );
+  // connect(
+  //     &m_fftThread,
+  //     &FftThread::signalRealFftAvailable,
+  //     this,
+  //     &IqReceiver::signalRealFftAvailable,
+  //     Qt::QueuedConnection
+  // );
 //  connect(
 //      &m_fftThread,
 //      &FftThread::signalComplexTimeseriesAvailable,
@@ -62,7 +62,7 @@ IqReceiver::IqReceiver(int32_t sampleRate, size_t fftSize, AudioOutput* audioOut
 
   m_pDemodulator = new AmDemodulator(decimatorOutputRate);
 
-  m_fftThread.start();
+  // m_fftThread.start();
 }
 
 void
@@ -82,6 +82,7 @@ uint32_t
 IqReceiver::processSamples(ComplexPingPongBuffers& buffers, uint32_t inputLength)
 {
   // qDebug() << inputLength;
+  emitComplexSignal("input_signal", buffers.input(), inputLength);
   uint32_t outputLength = inputLength;
 
   for (auto stage : m_iqStages) {

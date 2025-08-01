@@ -35,9 +35,14 @@ public slots:
   void newAudioData(const SharedRealSeriesData& audioData) const;
      //void newFft(fftw_complex* fftOut, size_t length);
 
+  void newRealSignal(const std::string& contextId, const SharedRealSeriesData& timeseriesData, uint32_t length);
+  void newComplexSignal(const std::string& contextId, const SharedComplexSeriesData& timeseriesData, uint32_t length);
+
 protected:
-  static void calcSpectrumSeries(const std::vector<sdrreal>* spectrumData, QLineSeries& spectrumSeries);
-  static void calcSpectrumSeries(const std::vector<sdrcomplex>* spectrumData, QLineSeries& spectrumSeries);
+  static void powerSpectrum(const std::vector<sdrcomplex>& timeSeries, uint32_t timeSeriesLength, vsdrreal& spectrumOut);
+
+  static void calcSpectrumSeries(const vsdrreal* spectrumData, QLineSeries& spectrumSeries, bool shuffle = true);
+  static void calcSpectrumSeries(const vsdrcomplex* spectrumData, QLineSeries& spectrumSeries, bool shuffle = true);
 
 //private slots:
 //    void toggleMode();

@@ -19,7 +19,22 @@ signals:
   void signalComplexTimeseriesAvailable(SharedComplexSeriesData timeseries);
   void signalAudioDataAvailable(SharedRealSeriesData audioData);
 
+  void signalComplexSignal(const std::string& contextId, SharedComplexSeriesData signal, uint32_t length);
+  void signalRealSignal(const std::string& contextId, SharedRealSeriesData signal, uint32_t length);
+
 public:
+  void emitComplexSignal(const std::string& contextId, const vsdrcomplex& signal, uint32_t length)
+  {
+    SharedComplexSeriesData sharedSignal = SharedComplexSeriesData(new vsdrcomplex(signal));
+    emit signalComplexSignal(contextId, sharedSignal, length);
+  }
+
+  void emitRealSignal(const std::string& contextId, const vsdrreal& signal, uint32_t length)
+  {
+    SharedRealSeriesData sharedSignal = SharedRealSeriesData(new vsdrreal(signal));
+    emit signalRealSignal(contextId, sharedSignal, length);
+  }
+
   void emitTimeseries(const vsdrcomplex& samples, uint32_t length, bool asFft = false)
   {
     auto * timeseries = new vsdrcomplex(samples);
